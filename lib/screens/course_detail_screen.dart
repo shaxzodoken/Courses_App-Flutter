@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../models/course_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'login_screen.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final Course course;
@@ -23,18 +25,15 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     isEnrolled = myEnrolledCourses.contains(widget.course);
 
     // 2. Avval video URLni modeldan olamiz
-    final videoUrl = widget.course.videoUrl; 
+    final videoUrl = widget.course.videoUrl;
 
     // 3. Keyin uni ID ga aylantiramiz
     final videoId = YoutubePlayer.convertUrlToId(videoUrl);
 
     _controller = YoutubePlayerController(
       // Agar videoId null bo'lsa (link xato bo'lsa), ilova qulab tushmasligi uchun tekshiruv:
-      initialVideoId: videoId ?? "", 
-      flags: const YoutubePlayerFlags(
-        autoPlay: false,
-        mute: false,
-      ),
+      initialVideoId: videoId ?? "",
+      flags: const YoutubePlayerFlags(autoPlay: false, mute: false),
     );
   }
 
@@ -84,7 +83,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     Expanded(
                       child: Text(
                         _controller.metadata.title,
-                        style: const TextStyle(color: Colors.white, fontSize: 18.0, overflow: TextOverflow.ellipsis),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18.0,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
                   ],
@@ -115,28 +118,49 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   // Sarlavha
                   Text(
                     widget.course.title,
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textColor),
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
                   ),
                   const SizedBox(height: 10),
-                  
+
                   // Kategoriya va O'qituvchi
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.indigo.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           widget.course.category,
-                          style: const TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold, fontSize: 12),
+                          style: const TextStyle(
+                            color: Colors.indigo,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 10),
-                      Icon(Icons.person_outline, size: 16, color: secondaryTextColor),
+                      Icon(
+                        Icons.person_outline,
+                        size: 16,
+                        color: secondaryTextColor,
+                      ),
                       const SizedBox(width: 4),
-                      Text(widget.course.instructor, style: TextStyle(color: secondaryTextColor, fontWeight: FontWeight.w500)),
+                      Text(
+                        widget.course.instructor,
+                        style: TextStyle(
+                          color: secondaryTextColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 25),
@@ -147,13 +171,17 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     decoration: BoxDecoration(
                       color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: isDark ? Colors.grey[800]! : Colors.transparent),
+                      border: Border.all(
+                        color: isDark ? Colors.grey[800]! : Colors.transparent,
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: isDark ? Colors.black26 : Colors.grey.withOpacity(0.08),
+                          color: isDark
+                              ? Colors.black26
+                              : Colors.grey.withOpacity(0.08),
                           blurRadius: 15,
                           offset: const Offset(0, 5),
-                        )
+                        ),
                       ],
                     ),
                     child: Row(
@@ -162,32 +190,83 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                         // Narx
                         Column(
                           children: [
-                            Text("Narxi", style: TextStyle(color: secondaryTextColor, fontSize: 12)),
+                            Text(
+                              "Narxi",
+                              style: TextStyle(
+                                color: secondaryTextColor,
+                                fontSize: 12,
+                              ),
+                            ),
                             const SizedBox(height: 4),
-                            Text(widget.course.price, style: const TextStyle(color: Colors.green, fontSize: 18, fontWeight: FontWeight.bold)),
+                            Text(
+                              widget.course.price,
+                              style: const TextStyle(
+                                color: Colors.green,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ],
                         ),
-                        Container(height: 30, width: 1, color: isDark ? Colors.grey[700] : Colors.grey[300]),
+                        Container(
+                          height: 30,
+                          width: 1,
+                          color: isDark ? Colors.grey[700] : Colors.grey[300],
+                        ),
                         // Reyting
                         Column(
                           children: [
-                            Text("Reyting", style: TextStyle(color: secondaryTextColor, fontSize: 12)),
+                            Text(
+                              "Reyting",
+                              style: TextStyle(
+                                color: secondaryTextColor,
+                                fontSize: 12,
+                              ),
+                            ),
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                const Icon(Icons.star, color: Colors.orange, size: 18),
-                                Text(" ${widget.course.rating}", style: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 16)),
+                                const Icon(
+                                  Icons.star,
+                                  color: Colors.orange,
+                                  size: 18,
+                                ),
+                                Text(
+                                  " ${widget.course.rating}",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: textColor,
+                                    fontSize: 16,
+                                  ),
+                                ),
                               ],
                             ),
                           ],
                         ),
-                        Container(height: 30, width: 1, color: isDark ? Colors.grey[700] : Colors.grey[300]),
+                        Container(
+                          height: 30,
+                          width: 1,
+                          color: isDark ? Colors.grey[700] : Colors.grey[300],
+                        ),
                         // Vaqt
                         Column(
                           children: [
-                            Text("Davomiyligi", style: TextStyle(color: secondaryTextColor, fontSize: 12)),
+                            Text(
+                              "Davomiyligi",
+                              style: TextStyle(
+                                color: secondaryTextColor,
+                                fontSize: 12,
+                              ),
+                            ),
                             const SizedBox(height: 4),
-                            Text("12 soat", style: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 16)),
+                            Text(
+                              "12 soat",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: textColor,
+                                fontSize: 16,
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -196,24 +275,67 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   const SizedBox(height: 30),
 
                   // Tavsif
-                  Text("Kurs haqida", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
+                  Text(
+                    "Kurs haqida",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   Text(
                     "Bu kurs orqali siz noldan boshlab professional darajagacha o'rganasiz. Darslar amaliy mashg'ulotlarga boy va real loyihalar asosida tuzilgan.",
-                    style: TextStyle(color: secondaryTextColor, height: 1.6, fontSize: 15),
+                    style: TextStyle(
+                      color: secondaryTextColor,
+                      height: 1.6,
+                      fontSize: 15,
+                    ),
                   ),
                   const SizedBox(height: 30),
 
                   // Darslar ro'yxati
-                  Text("Darslar mundarijasi", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
+                  Text(
+                    "Darslar mundarijasi",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
                   const SizedBox(height: 15),
-                  
-                  _buildLessonItem("1. Kirish va o'rnatish", "12:30", false, context),
-                  _buildLessonItem("2. Asosiy tushunchalar", "15:45", !isEnrolled, context),
-                  _buildLessonItem("3. O'zgaruvchilar", "20:10", !isEnrolled, context),
-                  _buildLessonItem("4. Amaliy mashg'ulot", "45:00", !isEnrolled, context),
-                  _buildLessonItem("5. Yakuniy imtihon", "60:00", !isEnrolled, context),
-                  
+
+                  _buildLessonItem(
+                    "1. Kirish va o'rnatish",
+                    "12:30",
+                    false,
+                    context,
+                  ),
+                  _buildLessonItem(
+                    "2. Asosiy tushunchalar",
+                    "15:45",
+                    !isEnrolled,
+                    context,
+                  ),
+                  _buildLessonItem(
+                    "3. O'zgaruvchilar",
+                    "20:10",
+                    !isEnrolled,
+                    context,
+                  ),
+                  _buildLessonItem(
+                    "4. Amaliy mashg'ulot",
+                    "45:00",
+                    !isEnrolled,
+                    context,
+                  ),
+                  _buildLessonItem(
+                    "5. Yakuniy imtihon",
+                    "60:00",
+                    !isEnrolled,
+                    context,
+                  ),
+
                   const SizedBox(height: 20),
                 ],
               ),
@@ -221,7 +343,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           ],
         ),
       ),
-      
+
       // --- PASTKI TUGMA (Bottom Bar) ---
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(20),
@@ -232,48 +354,92 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               color: isDark ? Colors.black45 : Colors.grey.withOpacity(0.1),
               blurRadius: 10,
               offset: const Offset(0, -5),
-            )
+            ),
           ],
-          border: Border(top: BorderSide(color: isDark ? Colors.grey[800]! : Colors.transparent)),
+          border: Border(
+            top: BorderSide(
+              color: isDark ? Colors.grey[800]! : Colors.transparent,
+            ),
+          ),
         ),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: isEnrolled ? Colors.green : Colors.indigo,
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             elevation: 5,
-            shadowColor: isEnrolled ? Colors.green.withOpacity(0.4) : Colors.indigo.withOpacity(0.4),
+            shadowColor: isEnrolled
+                ? Colors.green.withOpacity(0.4)
+                : Colors.indigo.withOpacity(0.4),
           ),
-          onPressed: isEnrolled 
-            ? () {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Dars davom etmoqda...")));
-              } 
-            : _enrollCourse,
+          onPressed: isEnrolled
+              ? () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Dars davom etmoqda...")),
+                  );
+                }
+              : () {
+                  // 1. TEKSHIRAMIZ: ODAM KIRGANMI?
+                  final user = FirebaseAuth.instance.currentUser;
+
+                  if (user == null) {
+                    // A) AGAR KIRMAGAN BO'LSA -> LOGIN OYNASIGA O'TSIN
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoginScreen(),
+                      ),
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          "Kursga yozilish uchun avval tizimga kiring",
+                        ),
+                      ),
+                    );
+                  } else {
+                    // B) AGAR KIRGAN BO'LSA -> KURSGA YOZILSIN
+                    _enrollCourse();
+                  }
+                },
           child: Text(
             isEnrolled ? "Darsni davom ettirish" : "Kursga yozilish",
-            style: const TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildLessonItem(String title, String duration, bool isLocked, BuildContext context) {
+  Widget _buildLessonItem(
+    String title,
+    String duration,
+    bool isLocked,
+    BuildContext context,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black87;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isDark ? Colors.grey[800]! : Colors.transparent),
+        border: Border.all(
+          color: isDark ? Colors.grey[800]! : Colors.transparent,
+        ),
         boxShadow: [
           BoxShadow(
             color: isDark ? Colors.black26 : Colors.grey.withOpacity(0.05),
             blurRadius: 5,
             offset: const Offset(0, 2),
-          )
+          ),
         ],
       ),
       child: ListTile(
@@ -281,8 +447,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: isLocked 
-                ? (isDark ? Colors.grey[800] : Colors.grey[200]) 
+            color: isLocked
+                ? (isDark ? Colors.grey[800] : Colors.grey[200])
                 : Colors.indigo.withOpacity(0.1),
             borderRadius: BorderRadius.circular(10),
           ),
@@ -293,21 +459,30 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           ),
         ),
         title: Text(
-          title, 
-          style: TextStyle(fontWeight: FontWeight.w600, color: isLocked ? Colors.grey : textColor),
+          title,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: isLocked ? Colors.grey : textColor,
+          ),
         ),
-        subtitle: Text(duration, style: TextStyle(color: isDark ? Colors.grey[500] : Colors.grey[600], fontSize: 12)),
-        trailing: isLocked 
-          ? null 
-          : const Icon(Icons.check_circle, color: Colors.green, size: 20),
+        subtitle: Text(
+          duration,
+          style: TextStyle(
+            color: isDark ? Colors.grey[500] : Colors.grey[600],
+            fontSize: 12,
+          ),
+        ),
+        trailing: isLocked
+            ? null
+            : const Icon(Icons.check_circle, color: Colors.green, size: 20),
         onTap: () {
           if (isLocked) {
-             ScaffoldMessenger.of(context).showSnackBar(
-               const SnackBar(
-                 content: Text("Bu darsni ko'rish uchun kursga yoziling!"),
-                 behavior: SnackBarBehavior.floating,
-               )
-             );
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Bu darsni ko'rish uchun kursga yoziling!"),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
           } else {
             // Video o'zgartirish logikasi
           }

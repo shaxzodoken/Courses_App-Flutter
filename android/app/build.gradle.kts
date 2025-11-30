@@ -22,6 +22,7 @@ dependencies {
 android {
     namespace = "com.example.project" // DIQQAT: Bu yerni o'zgartirmang agar xato bermasa
     compileSdk = flutter.compileSdkVersion
+    buildToolsVersion = "34.0.0"
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
