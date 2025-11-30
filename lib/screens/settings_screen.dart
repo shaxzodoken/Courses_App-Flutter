@@ -11,6 +11,7 @@ class SettingsScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black;
     final subTextColor = isDark ? Colors.grey[400] : Colors.grey[600];
+    const Divider(indent: 16, endIndent: 16);
 
     return Scaffold(
       appBar: AppBar(
@@ -77,7 +78,7 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                     value: isDarkModeOn,
-                    activeColor: Colors.indigo,
+                    activeThumbColor: Colors.indigo,
                     onChanged: (value) {
                       themeNotifier.value = value ? ThemeMode.dark : ThemeMode.light;
                     },
@@ -132,6 +133,26 @@ class SettingsScreen extends StatelessWidget {
                     icon: Icons.lock_outline, 
                     onTap: () {}
                   ),
+                  ValueListenableBuilder<bool>(
+                valueListenable: adminModeNotifier, // main.dart dan keladi
+                builder: (context, isAdmin, child) {
+                  return SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    title: const Text("Admin Rejimi", style: TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: const Text("Kurs qo'shish imkoniyati"),
+                    secondary: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                      child: const Icon(Icons.security, color: Colors.orange),
+                    ),
+                    value: isAdmin,
+                    activeColor: Colors.orange,
+                    onChanged: (value) {
+                      adminModeNotifier.value = value; // Yoqib/O'chiramiz
+                    },
+                  );
+                },
+              ),
                 ],
               ),
             ),

@@ -4,8 +4,11 @@ import '../models/course_model.dart';
 import '../components/section_header.dart';
 import '../components/category_selector.dart';
 import '../components/course_cards.dart';
+import '../main.dart';
 import 'profile_screen.dart';
 import 'my_courses_screen.dart';
+import 'add_course_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -39,6 +42,23 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       // Body qismi (Scaffold background main.dart dan keladi)
       body: _pages[_selectedIndex],
+
+      floatingActionButton: ValueListenableBuilder<bool>(
+        valueListenable: adminModeNotifier, // Pultni eshitamiz
+        builder: (context, isAdmin, child) {
+          // Agar Admin bo'lmasa -> Tugma yo'q (null)
+          if (!isAdmin) return const SizedBox(); 
+          
+          // Agar Admin bo'lsa -> (+) tugmasi chiqadi
+          return FloatingActionButton(
+            backgroundColor: Colors.orange,
+            child: const Icon(Icons.add, color: Colors.white),
+            onPressed: () {
+               Navigator.push(context, MaterialPageRoute(builder: (context) => const AddCourseScreen()));
+            },
+          );
+        },
+      ),
 
       // --- PASTKI MENYU (Professional Dizayn) ---
       bottomNavigationBar: Container(
@@ -88,19 +108,8 @@ class _HomeContentState extends State<HomeContent> {
   String _searchQuery = "";
   String _selectedCategory = "Barchasi";
 
-  List<Course> get _filteredCourses {
-    return allCourses.where((course) {
-      final matchesSearch = course.title.toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesCategory = _selectedCategory == "Barchasi" || course.category == _selectedCategory;
-      return matchesSearch && matchesCategory;
-    }).toList();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final displayCourses = _filteredCourses;
-    
-    // Ranglar
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black;
     final secondaryTextColor = isDark ? Colors.grey[400] : Colors.grey[600];
@@ -111,24 +120,18 @@ class _HomeContentState extends State<HomeContent> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- 1. HEADER QISMI ---
+            // --- HEADER (O'zgarmadi) ---
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
               child: Row(
                 children: [
                   GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                      );
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
                     },
                     child: Container(
                       padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.indigo, width: 2),
-                      ),
+                      decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.indigo, width: 2)),
                       child: const CircleAvatar(
                         radius: 24,
                         backgroundImage: NetworkImage("https://picsum.photos/id/64/200/200"),
@@ -143,39 +146,19 @@ class _HomeContentState extends State<HomeContent> {
                       Text("Talaba", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
                     ],
                   ),
-                  const Spacer(),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                         BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 5)
-                      ]
-                    ),
-                    child: IconButton(
-                      onPressed: () {},
-                      icon: Icon(Icons.notifications_outlined, color: textColor),
-                    ),
-                  ),
                 ],
               ),
             ),
 
-            // --- 2. QIDIRUV (SEARCH BAR) ---
+            // --- QIDIRUV ---
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               padding: const EdgeInsets.symmetric(horizontal: 15),
               decoration: BoxDecoration(
-                color: Theme.of(context).cardColor, // Dinamik fon
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: isDark ? Colors.black26 : Colors.grey.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  )
-                ],
                 border: Border.all(color: isDark ? Colors.grey[800]! : Colors.transparent),
+                boxShadow: [BoxShadow(color: isDark ? Colors.black26 : Colors.grey.withOpacity(0.1), blurRadius: 10)],
               ),
               child: TextField(
                 style: TextStyle(color: textColor),
@@ -188,58 +171,77 @@ class _HomeContentState extends State<HomeContent> {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
 
-            // --- 3. KATEGORIYALAR ---
+            // --- KATEGORIYALAR ---
             CategorySelector(
               selectedCategory: _selectedCategory,
-              onCategorySelected: (category) {
-                setState(() => _selectedCategory = category);
-              },
+              onCategorySelected: (category) => setState(() => _selectedCategory = category),
             ),
             const SizedBox(height: 20),
 
-            // --- 4. MASHHUR KURSLAR ---
-            if (displayCourses.isNotEmpty) ...[
-              SectionHeader(title: "Mashhur Kurslar 🔥", onSeeAll: () {}),
-              SizedBox(
-                height: 280, // Biroz kattalashtirdik soyalar uchun
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.only(right: 20),
-                  itemCount: displayCourses.length,
-                  itemBuilder: (context, index) {
-                    return CourseCardVertical(course: displayCourses[index]);
-                  },
-                ),
-              ),
-            ],
+            // --- 🔥 FIREBASE BILAN ULANGAN QISM ---
+            SectionHeader(title: "Barcha Kurslar (Online) 🌐", onSeeAll: () {}),
 
-            // --- 5. NATIJALAR (LIST) ---
-            const SizedBox(height: 10),
-            SectionHeader(title: "Barcha darslar", onSeeAll: () {}),
+            StreamBuilder<QuerySnapshot>(
+              // 1. Firebase "courses" kolleksiyasiga ulanamiz
+              stream: FirebaseFirestore.instance.collection('courses').snapshots(),
+              builder: (context, snapshot) {
+                // A) Yuklanmoqda...
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-            displayCourses.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(40),
-                      child: Column(
-                        children: [
-                          Icon(Icons.search_off, size: 60, color: secondaryTextColor),
-                          const SizedBox(height: 10),
-                          Text("Hech narsa topilmadi", style: TextStyle(color: secondaryTextColor)),
-                        ],
-                      ),
-                    ),
-                  )
-                : ListView.builder(
-                    physics: const NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
-                    itemCount: displayCourses.length,
+                // B) Xatolik bo'lsa
+                if (snapshot.hasError) {
+                  return const Center(child: Text("Xatolik yuz berdi!"));
+                }
+
+                // C) Ma'lumot keldi, endi uni filtrlaymiz
+                var docs = snapshot.data!.docs;
+                
+                // Filtrlash logikasi (Qidiruv va Kategoriya)
+                var filteredDocs = docs.where((doc) {
+                  var data = doc.data() as Map<String, dynamic>;
+                  String title = (data['title'] ?? "").toString().toLowerCase();
+                  String category = (data['category'] ?? "").toString();
+
+                  bool matchesSearch = title.contains(_searchQuery.toLowerCase());
+                  bool matchesCategory = _selectedCategory == "Barchasi" || category == _selectedCategory;
+
+                  return matchesSearch && matchesCategory;
+                }).toList();
+
+                // D) Agar kurs yo'q bo'lsa
+                if (filteredDocs.isEmpty) {
+                  return const Center(child: Text("Hozircha kurslar yo'q"));
+                }
+
+                // E) Ro'yxatni chizish
+                return SizedBox(
+                  height: 280,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: filteredDocs.length,
                     itemBuilder: (context, index) {
-                      return CourseCardHorizontal(course: displayCourses[index]);
+                      var data = filteredDocs[index].data() as Map<String, dynamic>;
+                      
+                      // Firebasedan kelgan ma'lumotni Modelga o'giramiz
+                      Course course = Course(
+                        title: data['title'] ?? "Nomsiz",
+                        category: data['category'] ?? "General",
+                        image: data['image'] ?? "https://picsum.photos/200/300",
+                        price: data['price'] ?? "Bepul",
+                        rating: data['rating'] ?? "0.0",
+                        instructor: data['instructor'] ?? "Admin",
+                      );
+
+                      return CourseCardVertical(course: course);
                     },
                   ),
+                );
+              },
+            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),

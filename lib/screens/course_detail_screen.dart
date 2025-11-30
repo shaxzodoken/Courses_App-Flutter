@@ -19,10 +19,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // 1. Kurs allaqachon bormi?
+    // 1. Kurs allaqachon "Mening darslarim"da bormi?
     isEnrolled = myEnrolledCourses.contains(widget.course);
 
     // 2. Video sozlamalari
+    // Hozircha hamma kursga bitta video (Flutter darsi) qo'ydim
     const videoUrl = "https://www.youtube.com/watch?v=fq4N0hgOWzU";
     final videoId = YoutubePlayer.convertUrlToId(videoUrl);
 
@@ -51,6 +52,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       SnackBar(
         content: Text("${widget.course.title} darslaringizga qo'shildi!"),
         backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -58,13 +61,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Tungi rejimni aniqlash
+    // REJIMNI ANIQLASH
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black;
     final secondaryTextColor = isDark ? Colors.grey[400] : Colors.grey[600];
 
     return Scaffold(
-      // Background scaffolddan olinadi (main.dart da sozlangan)
       body: SafeArea(
         child: Column(
           children: [
@@ -80,11 +82,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     Expanded(
                       child: Text(
                         _controller.metadata.title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18.0,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        style: const TextStyle(color: Colors.white, fontSize: 18.0, overflow: TextOverflow.ellipsis),
                       ),
                     ),
                   ],
@@ -93,11 +91,13 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 Positioned(
                   top: 10,
                   left: 10,
-                  child: CircleAvatar(
-                    backgroundColor: Colors.black.withOpacity(0.5),
-                    radius: 20,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      shape: BoxShape.circle,
+                    ),
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ),
@@ -105,7 +105,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               ],
             ),
 
-            // --- 2. KURS MA'LUMOTLARI ---
+            // --- 2. KURS MA'LUMOTLARI (Scroll) ---
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.all(20),
@@ -113,22 +113,18 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   // Sarlavha
                   Text(
                     widget.course.title,
-                    style: TextStyle(
-                      fontSize: 24, 
-                      fontWeight: FontWeight.bold, 
-                      color: textColor
-                    ),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textColor),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   
                   // Kategoriya va O'qituvchi
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
                           color: Colors.indigo.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           widget.course.category,
@@ -136,66 +132,75 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      Text("•  ${widget.course.instructor}", style: TextStyle(color: secondaryTextColor)),
+                      Icon(Icons.person_outline, size: 16, color: secondaryTextColor),
+                      const SizedBox(width: 4),
+                      Text(widget.course.instructor, style: TextStyle(color: secondaryTextColor, fontWeight: FontWeight.w500)),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 25),
 
-                  // Narx va Reyting bloki
+                  // --- INFO BLOK (Narx, Reyting, Vaqt) ---
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor, // Dinamik rang
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: isDark ? Colors.grey[800]! : Colors.transparent),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark ? Colors.black26 : Colors.grey.withOpacity(0.08),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        )
+                      ],
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        // Narx
                         Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text("Narxi", style: TextStyle(color: secondaryTextColor, fontSize: 12)),
-                            Text(
-                              widget.course.price,
-                              style: const TextStyle(color: Colors.green, fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
+                            const SizedBox(height: 4),
+                            Text(widget.course.price, style: const TextStyle(color: Colors.green, fontSize: 18, fontWeight: FontWeight.bold)),
                           ],
                         ),
-                        Container(height: 30, width: 1, color: Colors.grey[300]),
+                        Container(height: 30, width: 1, color: isDark ? Colors.grey[700] : Colors.grey[300]),
+                        // Reyting
                         Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text("Reyting", style: TextStyle(color: secondaryTextColor, fontSize: 12)),
+                            const SizedBox(height: 4),
                             Row(
                               children: [
-                                const Icon(Icons.star, color: Colors.orange, size: 16),
-                                Text(" ${widget.course.rating}", style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+                                const Icon(Icons.star, color: Colors.orange, size: 18),
+                                Text(" ${widget.course.rating}", style: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 16)),
                               ],
                             ),
                           ],
                         ),
-                        Container(height: 30, width: 1, color: Colors.grey[300]),
+                        Container(height: 30, width: 1, color: isDark ? Colors.grey[700] : Colors.grey[300]),
+                        // Vaqt
                         Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text("Davomiyligi", style: TextStyle(color: secondaryTextColor, fontSize: 12)),
-                            Text("12 soat", style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+                            const SizedBox(height: 4),
+                            Text("12 soat", style: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 16)),
                           ],
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 30),
 
                   // Tavsif
                   Text("Kurs haqida", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Text(
                     "Bu kurs orqali siz noldan boshlab professional darajagacha o'rganasiz. Darslar amaliy mashg'ulotlarga boy va real loyihalar asosida tuzilgan.",
-                    style: TextStyle(color: secondaryTextColor, height: 1.5, fontSize: 15),
+                    style: TextStyle(color: secondaryTextColor, height: 1.6, fontSize: 15),
                   ),
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 30),
 
                   // Darslar ro'yxati
                   Text("Darslar mundarijasi", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
@@ -214,12 +219,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           ],
         ),
       ),
-
+      
       // --- PASTKI TUGMA (Bottom Bar) ---
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor, // Oq yoki Qora (Avtomatik)
+          color: Theme.of(context).cardColor,
           boxShadow: [
             BoxShadow(
               color: isDark ? Colors.black45 : Colors.grey.withOpacity(0.1),
@@ -227,14 +232,15 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               offset: const Offset(0, -5),
             )
           ],
-          border: Border(top: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[200]!)),
+          border: Border(top: BorderSide(color: isDark ? Colors.grey[800]! : Colors.transparent)),
         ),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: isEnrolled ? Colors.green : Colors.indigo,
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            elevation: 5,
+            shadowColor: isEnrolled ? Colors.green.withOpacity(0.4) : Colors.indigo.withOpacity(0.4),
           ),
           onPressed: isEnrolled 
             ? () {
@@ -252,13 +258,21 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
   Widget _buildLessonItem(String title, String duration, bool isLocked, BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
     
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor, // Dinamik rang
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+        border: Border.all(color: isDark ? Colors.grey[800]! : Colors.transparent),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black26 : Colors.grey.withOpacity(0.05),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          )
+        ],
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -266,8 +280,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: isLocked 
-                ? (isDark ? Colors.grey[800] : Colors.grey[200]) // Qulflangan rang
-                : Colors.indigo.withOpacity(0.1), // Ochiq rang
+                ? (isDark ? Colors.grey[800] : Colors.grey[200]) 
+                : Colors.indigo.withOpacity(0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
@@ -278,10 +292,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         ),
         title: Text(
           title, 
-          style: TextStyle(
-            fontWeight: FontWeight.w600, 
-            color: isLocked ? Colors.grey : (isDark ? Colors.white : Colors.black87)
-          )
+          style: TextStyle(fontWeight: FontWeight.w600, color: isLocked ? Colors.grey : textColor),
         ),
         subtitle: Text(duration, style: TextStyle(color: isDark ? Colors.grey[500] : Colors.grey[600], fontSize: 12)),
         trailing: isLocked 
@@ -290,10 +301,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         onTap: () {
           if (isLocked) {
              ScaffoldMessenger.of(context).showSnackBar(
-               SnackBar(
-                 content: const Text("Bu darsni ko'rish uchun kursga yoziling!"),
+               const SnackBar(
+                 content: Text("Bu darsni ko'rish uchun kursga yoziling!"),
                  behavior: SnackBarBehavior.floating,
-                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                )
              );
           } else {
