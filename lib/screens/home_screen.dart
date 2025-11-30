@@ -1,4 +1,5 @@
 // lib/screens/home_screen.dart
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/course_model.dart';
 import '../components/section_header.dart';
@@ -8,6 +9,7 @@ import '../main.dart';
 import 'profile_screen.dart';
 import 'my_courses_screen.dart';
 import 'add_course_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -28,10 +30,35 @@ class _HomeScreenState extends State<HomeScreen> {
     const ProfileScreen(),       // 3: Profil
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _checkAdminRole(); // Ilova ochilishi bilan tekshiramiz
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  Future<void> _checkAdminRole() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      // Bazadan shu odamni qidiramiz
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      // Agar u "users" ro'yxatida bo'lsa va roli "admin" bo'lsa
+      if (userDoc.exists && userDoc.data()?['role'] == 'admin') {
+        adminModeNotifier.value = true; // Admin rejimini yoqamiz!
+      } else {
+        adminModeNotifier.value = false; // Aks holda o'chiramiz
+      }
+    }
   }
 
   @override
@@ -97,6 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 // --- ASOSIY KONTENT (HOME) ---
+// lib/screens/home_screen.dart (HomeContent qismi)
 class HomeContent extends StatefulWidget {
   const HomeContent({super.key});
 
@@ -110,6 +138,17 @@ class _HomeContentState extends State<HomeContent> {
 
   @override
   Widget build(BuildContext context) {
+    // 1. FIREBASE MA'LUMOTLARINI TAYYORLASH
+    final user = FirebaseAuth.instance.currentUser;
+    final String displayName = user?.displayName ?? "Foydalanuvchi";
+    final String? photoUrl = user?.photoURL;
+    final String email = user?.email ?? "";
+
+    // Ism bo'lmasa, emailni kesib olamiz
+    final String displayNameFinal = (displayName == "Foydalanuvchi" && email.isNotEmpty)
+        ? email.split('@')[0]
+        : displayName;
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black;
     final secondaryTextColor = isDark ? Colors.grey[400] : Colors.grey[600];
@@ -120,7 +159,7 @@ class _HomeContentState extends State<HomeContent> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- HEADER (O'zgarmadi) ---
+            // --- HEADER QISMI (YANGILANDI) ---
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
               child: Row(
@@ -131,10 +170,17 @@ class _HomeContentState extends State<HomeContent> {
                     },
                     child: Container(
                       padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.indigo, width: 2)),
-                      child: const CircleAvatar(
+                      decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.indigo, width: 2)
+                      ),
+                      child: CircleAvatar(
                         radius: 24,
-                        backgroundImage: NetworkImage("https://picsum.photos/id/64/200/200"),
+                        // --- 2. RASM O'ZGARDI ---
+                        // Agar Google rasm bo'lsa o'shani, bo'lmasa eskisini qo'yamiz
+                        backgroundImage: photoUrl != null
+                            ? NetworkImage(photoUrl)
+                            : const NetworkImage("https://picsum.photos/id/64/200/200"),
                       ),
                     ),
                   ),
@@ -143,7 +189,11 @@ class _HomeContentState extends State<HomeContent> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text("Xush kelibsiz, 👋", style: TextStyle(color: secondaryTextColor, fontSize: 14)),
-                      Text("Talaba", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
+                      // --- 3. ISM O'ZGARDI ---
+                      Text(
+                          displayNameFinal, // "Talaba" o'rniga haqiqiy ism
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textColor)
+                      ),
                     ],
                   ),
                 ],
@@ -179,27 +229,21 @@ class _HomeContentState extends State<HomeContent> {
             ),
             const SizedBox(height: 20),
 
-            // --- 🔥 FIREBASE BILAN ULANGAN QISM ---
+            // --- FIREBASE KURSLAR ---
             SectionHeader(title: "Barcha Kurslar (Online) 🌐", onSeeAll: () {}),
 
             StreamBuilder<QuerySnapshot>(
-              // 1. Firebase "courses" kolleksiyasiga ulanamiz
               stream: FirebaseFirestore.instance.collection('courses').snapshots(),
               builder: (context, snapshot) {
-                // A) Yuklanmoqda...
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-
-                // B) Xatolik bo'lsa
                 if (snapshot.hasError) {
                   return const Center(child: Text("Xatolik yuz berdi!"));
                 }
 
-                // C) Ma'lumot keldi, endi uni filtrlaymiz
                 var docs = snapshot.data!.docs;
-                
-                // Filtrlash logikasi (Qidiruv va Kategoriya)
+
                 var filteredDocs = docs.where((doc) {
                   var data = doc.data() as Map<String, dynamic>;
                   String title = (data['title'] ?? "").toString().toLowerCase();
@@ -211,12 +255,10 @@ class _HomeContentState extends State<HomeContent> {
                   return matchesSearch && matchesCategory;
                 }).toList();
 
-                // D) Agar kurs yo'q bo'lsa
                 if (filteredDocs.isEmpty) {
                   return const Center(child: Text("Hozircha kurslar yo'q"));
                 }
 
-                // E) Ro'yxatni chizish
                 return SizedBox(
                   height: 280,
                   child: ListView.builder(
@@ -224,15 +266,16 @@ class _HomeContentState extends State<HomeContent> {
                     itemCount: filteredDocs.length,
                     itemBuilder: (context, index) {
                       var data = filteredDocs[index].data() as Map<String, dynamic>;
-                      
-                      // Firebasedan kelgan ma'lumotni Modelga o'giramiz
+
                       Course course = Course(
+                        id: filteredDocs[index].id,
                         title: data['title'] ?? "Nomsiz",
                         category: data['category'] ?? "General",
                         image: data['image'] ?? "https://picsum.photos/200/300",
                         price: data['price'] ?? "Bepul",
                         rating: data['rating'] ?? "0.0",
                         instructor: data['instructor'] ?? "Admin",
+                        // Video URL ni olishni ham qo'shdik:
                         videoUrl: data['videoUrl'] ?? "https://www.youtube.com/watch?v=fq4N0hgOWzU",
                       );
 

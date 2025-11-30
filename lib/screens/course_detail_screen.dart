@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../models/course_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login_screen.dart';
+import '../main.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final Course course;
@@ -35,6 +37,53 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       initialVideoId: videoId ?? "",
       flags: const YoutubePlayerFlags(autoPlay: false, mute: false),
     );
+  }
+
+  void _deleteCourseFromFirebase() async {
+    // Tasdiqlash oynasi
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Kursni o'chirish"),
+        content: const Text(
+          "Haqiqatan ham bu kursni bazadan o'chirib tashlamoqchimisiz?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Yo'q"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              "Ha, o'chirilsin",
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && widget.course.id != null) {
+      try {
+        // Firebase-dan o'chirish
+        await FirebaseFirestore.instance
+            .collection('courses')
+            .doc(widget.course.id)
+            .delete();
+
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text("Kurs o'chirildi 🗑️")));
+          Navigator.pop(context); // Bosh sahifaga qaytish
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Xatolik: $e")));
+      }
+    }
   }
 
   @override
@@ -105,6 +154,29 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
                       onPressed: () => Navigator.pop(context),
                     ),
+                  ),
+                ),
+
+                Positioned(
+                  top: 10,
+                  right: 10, // O'ng tarafda turadi
+                  child: ValueListenableBuilder<bool>(
+                    valueListenable: adminModeNotifier,
+                    builder: (context, isAdmin, child) {
+                      if (!isAdmin)
+                        return const SizedBox(); // Admin bo'lmasa ko'rinmaydi
+
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.8),
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.white),
+                          onPressed: _deleteCourseFromFirebase,
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],

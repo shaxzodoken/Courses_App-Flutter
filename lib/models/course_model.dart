@@ -1,5 +1,6 @@
 // lib/models/course_model.dart
 class Course {
+  final String? id;
   final String title;
   final String instructor;
   final String rating;
@@ -9,6 +10,7 @@ class Course {
   final String price;
 
   Course({
+    this.id,
     required this.title,
     required this.instructor,
     required this.rating,

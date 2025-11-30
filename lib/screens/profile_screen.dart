@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../models/course_model.dart';
 import 'personal_details_screen.dart';
 import 'settings_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'login_screen.dart'; // Login oynasiga qaytish uchun
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -18,7 +21,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // REJIMNI ANIQLASH
+    final user = FirebaseAuth.instance.currentUser;
+    final String userName = user?.displayName ?? (user?.email?.split('@')[0] ?? "Foydalanuvchi");
+    final String userEmail = user?.email ?? "Email yo'q";
+    final String? photoUrl = user?.photoURL;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black;
     final subTextColor = isDark ? Colors.grey[400] : Colors.grey[600];
@@ -48,25 +54,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           child: CircleAvatar(
                             radius: 55,
-                            backgroundImage: NetworkImage(userImage),
+                            // Agar Google rasm bo'lsa o'shani, bo'lmasa standartni oladi
+                            backgroundImage: photoUrl != null
+                                ? NetworkImage(photoUrl)
+                                : const NetworkImage("https://picsum.photos/id/64/200/200"),
                           ),
                         ),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.indigo,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Theme.of(context).scaffoldBackgroundColor, 
-                                width: 3
-                              ),
-                            ),
-                            child: const Icon(Icons.edit, color: Colors.white, size: 18),
-                          ),
-                        )
+                        // ... (Edit iconchasi o'zgarishsiz)
                       ],
                     ),
                     const SizedBox(height: 15),
@@ -75,8 +69,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textColor),
                     ),
                     const SizedBox(height: 5),
+                    // Rol o'rniga Emailni chiqarib qo'yamiz (yoki "Talaba" deb qoldirasiz)
                     Text(
-                      userRole,
+                      userEmail,
                       style: TextStyle(color: subTextColor, fontSize: 14),
                     ),
                   ],
@@ -140,8 +135,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     
                     _buildMenuItem(Icons.help_outline, "Yordam markazi", textColor: textColor),
                     Divider(height: 1, color: isDark ? Colors.grey[800] : Colors.grey[200], indent: 20, endIndent: 20),
-                    
-                    _buildMenuItem(Icons.logout, "Chiqish", color: Colors.red),
+
+                    _buildMenuItem(
+                        Icons.logout,
+                        "Chiqish",
+                        color: Colors.red,
+                        onTap: () async {
+                          // 1. Google-dan chiqish (muhim!)
+                          await GoogleSignIn().signOut();
+
+                          // 2. Firebase-dan chiqish
+                          await FirebaseAuth.instance.signOut();
+
+                          // 3. Login oynasiga o'tkazib yuborish
+                          if (context.mounted) {
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                  (route) => false, // Orqaga qaytish yo'lini yopamiz
+                            );
+                          }
+                        }
+                    ),
                   ],
                 ),
               ),
