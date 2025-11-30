@@ -1,6 +1,7 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_screen.dart';
 
 // 1. MAVZU PULTI (Theme)
@@ -12,6 +13,15 @@ final ValueNotifier<bool> adminModeNotifier = ValueNotifier(false);
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  final prefs = await SharedPreferences.getInstance();
+  final isDark = prefs.getBool('isDark') ?? false; // Agar yo'q bo'lsa false (kunduzgi)
+  themeNotifier.value = isDark ? ThemeMode.dark : ThemeMode.light;
+  
+  // Admin rejimini ham eslab qolsin desangiz:
+  final isAdmin = prefs.getBool('isAdmin') ?? false;
+  adminModeNotifier.value = isAdmin;
+  
   runApp(const MyApp());
 }
 

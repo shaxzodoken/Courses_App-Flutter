@@ -19,16 +19,18 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // 1. Kurs allaqachon "Mening darslarim"da bormi?
+    // 1. Kursga yozilganligini tekshirish
     isEnrolled = myEnrolledCourses.contains(widget.course);
 
-    // 2. Video sozlamalari
-    // Hozircha hamma kursga bitta video (Flutter darsi) qo'ydim
-    const videoUrl = "https://www.youtube.com/watch?v=fq4N0hgOWzU";
+    // 2. Avval video URLni modeldan olamiz
+    final videoUrl = widget.course.videoUrl; 
+
+    // 3. Keyin uni ID ga aylantiramiz
     final videoId = YoutubePlayer.convertUrlToId(videoUrl);
 
     _controller = YoutubePlayerController(
-      initialVideoId: videoId!,
+      // Agar videoId null bo'lsa (link xato bo'lsa), ilova qulab tushmasligi uchun tekshiruv:
+      initialVideoId: videoId ?? "", 
       flags: const YoutubePlayerFlags(
         autoPlay: false,
         mute: false,

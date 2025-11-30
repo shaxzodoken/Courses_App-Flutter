@@ -233,6 +233,7 @@ class _HomeContentState extends State<HomeContent> {
                         price: data['price'] ?? "Bepul",
                         rating: data['rating'] ?? "0.0",
                         instructor: data['instructor'] ?? "Admin",
+                        videoUrl: data['videoUrl'] ?? "https://www.youtube.com/watch?v=fq4N0hgOWzU",
                       );
 
                       return CourseCardVertical(course: course);

@@ -1,5 +1,6 @@
 // lib/screens/settings_screen.dart
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart'; // Pultni chaqiramiz
 
 class SettingsScreen extends StatelessWidget {
@@ -16,8 +17,8 @@ class SettingsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Sozlamalar", 
-          style: TextStyle(color: textColor, fontWeight: FontWeight.bold)
+          "Sozlamalar",
+          style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         elevation: 0,
@@ -34,22 +35,30 @@ class SettingsScreen extends StatelessWidget {
           children: [
             // --- 1. KO'RINISH (APPEARANCE) ---
             Text(
-              "Ko'rinish", 
-              style: TextStyle(color: subTextColor, fontWeight: FontWeight.bold, fontSize: 14)
+              "Ko'rinish",
+              style: TextStyle(
+                color: subTextColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
             ),
             const SizedBox(height: 10),
-            
+
             Container(
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: isDark ? Colors.grey[800]! : Colors.transparent),
+                border: Border.all(
+                  color: isDark ? Colors.grey[800]! : Colors.transparent,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: isDark ? Colors.black26 : Colors.grey.withOpacity(0.05),
+                    color: isDark
+                        ? Colors.black26
+                        : Colors.grey.withOpacity(0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
-                  )
+                  ),
                 ],
               ),
               child: ValueListenableBuilder<ThemeMode>(
@@ -57,13 +66,21 @@ class SettingsScreen extends StatelessWidget {
                 builder: (context, mode, child) {
                   final isDarkModeOn = mode == ThemeMode.dark;
                   return SwitchListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
                     title: Text(
-                      "Tungi rejim", 
-                      style: TextStyle(fontWeight: FontWeight.w600, color: textColor)
+                      "Tungi rejim",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: textColor,
+                      ),
                     ),
                     subtitle: Text(
-                      isDarkModeOn ? "Ko'zni asrash rejimi yoqilgan" : "Oddiy rejim",
+                      isDarkModeOn
+                          ? "Ko'zni asrash rejimi yoqilgan"
+                          : "Oddiy rejim",
                       style: TextStyle(color: subTextColor, fontSize: 12),
                     ),
                     secondary: Container(
@@ -73,14 +90,20 @@ class SettingsScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
-                        isDarkModeOn ? Icons.dark_mode : Icons.light_mode, 
-                        color: Colors.indigo
+                        isDarkModeOn ? Icons.dark_mode : Icons.light_mode,
+                        color: Colors.indigo,
                       ),
                     ),
                     value: isDarkModeOn,
                     activeThumbColor: Colors.indigo,
-                    onChanged: (value) {
-                      themeNotifier.value = value ? ThemeMode.dark : ThemeMode.light;
+                    onChanged: (value) async {
+                      themeNotifier.value = value
+                          ? ThemeMode.dark
+                          : ThemeMode.light;
+
+                      // XOTIRAGA YOZISH
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setBool('isDark', value);
                     },
                   );
                 },
@@ -90,69 +113,97 @@ class SettingsScreen extends StatelessWidget {
 
             // --- 2. UMUMIY SOZLAMALAR ---
             Text(
-              "Umumiy", 
-              style: TextStyle(color: subTextColor, fontWeight: FontWeight.bold, fontSize: 14)
+              "Umumiy",
+              style: TextStyle(
+                color: subTextColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
             ),
             const SizedBox(height: 10),
-            
+
             Container(
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: isDark ? Colors.grey[800]! : Colors.transparent),
+                border: Border.all(
+                  color: isDark ? Colors.grey[800]! : Colors.transparent,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: isDark ? Colors.black26 : Colors.grey.withOpacity(0.05),
+                    color: isDark
+                        ? Colors.black26
+                        : Colors.grey.withOpacity(0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
-                  )
+                  ),
                 ],
               ),
               child: Column(
                 children: [
                   _buildSettingsTile(
-                    context, 
-                    title: "Tilni o'zgartirish", 
-                    icon: Icons.language, 
+                    context,
+                    title: "Tilni o'zgartirish",
+                    icon: Icons.language,
                     value: "O'zbekcha",
-                    onTap: () {}
+                    onTap: () {},
                   ),
-                  Divider(height: 1, indent: 60, color: isDark ? Colors.grey[800] : Colors.grey[200]),
-                  
-                  _buildSettingsTile(
-                    context, 
-                    title: "Bildirishnomalar", 
-                    icon: Icons.notifications_outlined, 
-                    onTap: () {}
+                  Divider(
+                    height: 1,
+                    indent: 60,
+                    color: isDark ? Colors.grey[800] : Colors.grey[200],
                   ),
-                  Divider(height: 1, indent: 60, color: isDark ? Colors.grey[800] : Colors.grey[200]),
 
                   _buildSettingsTile(
-                    context, 
-                    title: "Maxfiylik va Xavfsizlik", 
-                    icon: Icons.lock_outline, 
-                    onTap: () {}
+                    context,
+                    title: "Bildirishnomalar",
+                    icon: Icons.notifications_outlined,
+                    onTap: () {},
+                  ),
+                  Divider(
+                    height: 1,
+                    indent: 60,
+                    color: isDark ? Colors.grey[800] : Colors.grey[200],
+                  ),
+
+                  _buildSettingsTile(
+                    context,
+                    title: "Maxfiylik va Xavfsizlik",
+                    icon: Icons.lock_outline,
+                    onTap: () {},
                   ),
                   ValueListenableBuilder<bool>(
-                valueListenable: adminModeNotifier, // main.dart dan keladi
-                builder: (context, isAdmin, child) {
-                  return SwitchListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    title: const Text("Admin Rejimi", style: TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: const Text("Kurs qo'shish imkoniyati"),
-                    secondary: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                      child: const Icon(Icons.security, color: Colors.orange),
-                    ),
-                    value: isAdmin,
-                    activeColor: Colors.orange,
-                    onChanged: (value) {
-                      adminModeNotifier.value = value; // Yoqib/O'chiramiz
+                    valueListenable: adminModeNotifier, // main.dart dan keladi
+                    builder: (context, isAdmin, child) {
+                      return SwitchListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
+                        title: const Text(
+                          "Admin Rejimi",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: const Text("Kurs qo'shish imkoniyati"),
+                        secondary: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.security,
+                            color: Colors.orange,
+                          ),
+                        ),
+                        value: isAdmin,
+                        activeColor: Colors.orange,
+                        onChanged: (value) {
+                          adminModeNotifier.value = value; // Yoqib/O'chiramiz
+                        },
+                      );
                     },
-                  );
-                },
-              ),
+                  ),
                 ],
               ),
             ),
@@ -160,8 +211,12 @@ class SettingsScreen extends StatelessWidget {
 
             // --- 3. ILOVA HAQIDA ---
             Text(
-              "Yordam", 
-              style: TextStyle(color: subTextColor, fontWeight: FontWeight.bold, fontSize: 14)
+              "Yordam",
+              style: TextStyle(
+                color: subTextColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
             ),
             const SizedBox(height: 10),
 
@@ -169,29 +224,37 @@ class SettingsScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: isDark ? Colors.grey[800]! : Colors.transparent),
+                border: Border.all(
+                  color: isDark ? Colors.grey[800]! : Colors.transparent,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: isDark ? Colors.black26 : Colors.grey.withOpacity(0.05),
+                    color: isDark
+                        ? Colors.black26
+                        : Colors.grey.withOpacity(0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
-                  )
+                  ),
                 ],
               ),
               child: Column(
                 children: [
                   _buildSettingsTile(
-                    context, 
-                    title: "Qo'llab quvvatlash", 
-                    icon: Icons.headset_mic_outlined, 
-                    onTap: () {}
+                    context,
+                    title: "Qo'llab quvvatlash",
+                    icon: Icons.headset_mic_outlined,
+                    onTap: () {},
                   ),
-                  Divider(height: 1, indent: 60, color: isDark ? Colors.grey[800] : Colors.grey[200]),
-                   _buildSettingsTile(
-                    context, 
-                    title: "Biz haqimizda", 
-                    icon: Icons.info_outline, 
-                    onTap: () {}
+                  Divider(
+                    height: 1,
+                    indent: 60,
+                    color: isDark ? Colors.grey[800] : Colors.grey[200],
+                  ),
+                  _buildSettingsTile(
+                    context,
+                    title: "Biz haqimizda",
+                    icon: Icons.info_outline,
+                    onTap: () {},
                   ),
                 ],
               ),
@@ -200,21 +263,27 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 30),
             Center(
               child: Text(
-                "Versiya 1.0.0 (Beta)", 
-                style: TextStyle(color: subTextColor, fontSize: 12)
+                "Versiya 1.0.0 (Beta)",
+                style: TextStyle(color: subTextColor, fontSize: 12),
               ),
             ),
-             const SizedBox(height: 20),
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSettingsTile(BuildContext context, {required String title, required IconData icon, String? value, required VoidCallback onTap}) {
+  Widget _buildSettingsTile(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    String? value,
+    required VoidCallback onTap,
+  }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black87;
-    
+
     return ListTile(
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
@@ -227,16 +296,18 @@ class SettingsScreen extends StatelessWidget {
         child: Icon(icon, color: Colors.indigo, size: 22),
       ),
       title: Text(
-        title, 
-        style: TextStyle(fontWeight: FontWeight.w500, color: textColor)
+        title,
+        style: TextStyle(fontWeight: FontWeight.w500, color: textColor),
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (value != null)
-            Text(value, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-          if (value != null)
-            const SizedBox(width: 8),
+            Text(
+              value,
+              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+            ),
+          if (value != null) const SizedBox(width: 8),
           const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
         ],
       ),
